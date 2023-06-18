@@ -1,0 +1,98 @@
+Для создания такого демона на Qt нам потребуется использовать класс `QFile` для работы с файлами и класс `QCoreApplication` для создания основного цикла обработки сообщений (event loop).
+
+Вот как будет выглядеть код демона:
+
+```cpp
+#include <QCoreApplication>
+#include <QFile>
+#include <QTextStream>
+#include <QDebug>
+
+int main(int argc, char **argv)
+{
+    QCoreApplication app(argc, argv);
+
+    // Открываем файл для записи
+    QFile file("numbers.txt");
+    if (!file.open(QFile::Append | QFile::Text))
+    {
+        qCritical() << "Failed to open file for writing";
+        return -1;
+    }
+
+    // Генерируем и записываем число в файл
+    QTextStream stream(&file);
+    int num = qrand() % 100;
+    stream << num << "\n";
+
+    // Закрываем файл и завершаем приложение
+    file.close();
+    return 0;
+}
+```
+
+Этот код открывает файл "numbers.txt" в режиме дополнения (`QFile::Append`), а затем генерирует случайное число от 0 до 99 и записывает его в файл. После этого он закрывает файл и завершает работу.
+
+Чтобы сделать этот код работой как демона, нам нужно будет поместить его в бесконечный цикл и добавить задержку в несколько секунд между записью чисел в файл. Также нам потребуется обработка сигнала SIGTERM (сигнал прерывания), который демон может получить, когда пользователь попытается остановить его.
+
+Вот как будет выглядеть обновленный код:
+
+```cpp
+#include <QCoreApplication>
+#include <QFile>
+#include <QTextStream>
+#include <QDebug>
+#include <signal.h>
+
+bool running = true;
+
+void signalHandler(int signal)
+{
+    Q_UNUSED(signal);
+    running = false;
+}
+
+int main(int argc, char **argv)
+{
+    QCoreApplication app(argc, argv);
+
+    // Обработка сигнала прерывания
+    signal(SIGTERM, signalHandler);
+
+    // Бесконечный цикл записи чисел в файл
+    QFile file("numbers.txt");
+    if (!file.open(QFile::Append | QFile::Text))
+    {
+        qCritical() << "Failed to open file for writing";
+        return -1;
+    }
+
+    QTextStream stream(&file);
+    while (running)
+    {
+        int num = qrand() % 100;
+        stream << num << "\n";
+        qDebug() << "Wrote number" << num;
+        file.flush(); // Сбрасываем буфер на диск
+
+        QCoreApplication::processEvents(); // Обрабатываем ожидающие сообщения
+
+        // Задержка перед записью следующего числа
+        QThread::sleep(2);
+    }
+
+    // Закрываем файл и завершаем приложение
+    file.close();
+    return 0;
+}
+```
+
+В этой версии демона мы добавили бесконечный цикл `while` и настройки для обработки сигналов прерывания. Мы также добавили задержку в две секунды перед каждой записью числа в файл, чтобы демон не работал слишком быстро.
+
+Чтобы запустить этот демон, просто скомпилируйте его и запустите из командной строки:
+
+```
+./daemon
+```
+
+Он начнет записывать случайные числа в файл "numbers.txt" каждые две секунды, пока вы не остановите его с помощью сигнала прерывания (например, нажатия Ctrl+C в терминале).
