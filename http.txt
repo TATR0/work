@@ -1,0 +1,23 @@
+Для отправки HTTP-запроса из Qt-приложения к вашему daemon-серверу можно использовать класс `QNetworkAccessManager`. 
+
+Вам нужно создать экземпляр объекта `QNetworkAccessManager` и использовать его для отправки HTTP-запросов. Ниже приведен пример кода:
+
+```c++
+QString url = "http://localhost:8080/path/to/your/api";
+QNetworkAccessManager manager;
+QNetworkRequest request(QUrl(url));
+request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+QByteArray data = "{\"data\": \"your data to send\"}";
+QNetworkReply *reply = manager.post(request, data);
+while (!reply->isFinished())
+{
+    qApp->processEvents();
+}
+QString response = reply->readAll();
+reply->deleteLater();
+// обработка ответа
+```
+
+В этом коде мы создаем объект `request` с URL-адресом нашего сервера, заголовком `Content-Type`, указывающим, что данные содержатся в формате JSON, и данными, которые мы хотим отправить на сервер. Затем мы отправляем запросов на сервер, дожидаемся ответа и считываем ответ, используя `QNetworkReply`. 
+
+Кроме того, не забудьте включить в вашем daemon-сервере возможность принимать HTTP-запросы по нужному порту и пути.
