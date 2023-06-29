@@ -1,0 +1,87 @@
+Вот пример кода на QT, который свяжет между собой две виртуальные машины на Astralinux:
+
+1) Код для клиента (первой машины):
+
+```cpp
+#include <QCoreApplication>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QDebug>
+
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    // Создание объекта QNetworkAccessManager
+    QNetworkAccessManager manager;
+
+    // Создание объекта QNetworkRequest с адресом второй машины
+    QUrl url("http://вторая_машина_адрес");
+    QNetworkRequest request(url);
+
+    // Отправка GET-запроса на вторую машину
+    QNetworkReply *reply = manager.get(request);
+    QObject::connect(reply, &QNetworkReply::finished, [&]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            // Получение ответа от второй машины
+            QByteArray responseData = reply->readAll();
+            qDebug() << "Полученные данные:" << responseData;
+        } else {
+            qDebug() << "Ошибка:" << reply->errorString();
+        }
+
+        reply->deleteLater();
+        a.quit();
+    });
+
+    return a.exec();
+}
+```
+
+2) Код для второй машины (сервера):
+
+```cpp
+#include <QCoreApplication>
+#include <QTcpServer>
+#include <QTcpSocket>
+#include <QDebug>
+
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    // Создание объекта QTcpServer
+    QTcpServer server;
+    if (!server.listen(QHostAddress::Any, 12345)) {
+        qDebug() << "Ошибка запуска сервера:" << server.errorString();
+        return 1;
+    }
+
+    qDebug() << "Сервер запущен на порту 12345";
+
+    QObject::connect(&server, &QTcpServer::newConnection, [&]() {
+        // Принимаем новое соединение
+        QTcpSocket* socket = server.nextPendingConnection();
+
+        QObject::connect(socket, &QTcpSocket::readyRead, [&]() {
+            // Чтение данных от клиента
+            QByteArray requestData = socket->readAll();
+            qDebug() << "Полученные данные:" << requestData;
+
+            // Обработка полученных данных
+            QByteArray responseData = "Данные от сервера";
+            socket->write(responseData);
+            socket->flush();
+        });
+
+        QObject::connect(socket, &QTcpSocket::disconnected, [&]() {
+            socket->deleteLater();
+        });
+    });
+
+    return a.exec();
+}
+```
+
+Этот код создает соединение между клиентом и сервером через HTTP-запрос и ответ. При отправке GET-запроса с клиента на сервер, сервер принимает запрос, обрабатывает его и отправляет обратно данные.
