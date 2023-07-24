@@ -1,0 +1,49 @@
+Код на Qt, который отправляет HTTP-запрос и получает JSON-файл, может выглядеть следующим образом:
+
+```cpp
+#include <QCoreApplication>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
+
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    // Создаем объект для выполнения HTTP-запросов
+    QNetworkAccessManager manager;
+
+    // Создаем запрос
+    QNetworkRequest request;
+    request.setUrl(QUrl("http://example.com/api/data.json"));
+
+    // Отправляем запрос и получаем ответ
+    QNetworkReply *reply = manager.get(request);
+
+    // Обрабатываем ответ
+    QObject::connect(reply, &QNetworkReply::finished, [&]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray data = reply->readAll();
+
+            // Преобразуем полученные данные в JSON
+            QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+            QJsonObject jsonObject = jsonDocument.object();
+
+            // Перебираем JSON-объект и выводим его содержимое
+            for (auto it = jsonObject.begin(); it != jsonObject.end(); ++it) {
+                qDebug() << "Key:" << it.key() << ", Value:" << it.value();
+            }
+        } else {
+            qDebug() << "Error:" << reply->errorString();
+        }
+
+        // Завершаем приложение после получения ответа
+        qApp->quit();
+    });
+
+    return a.exec();
+}
+```
+
+В данном примере выполняется GET-запрос по указанному URL для получения JSON-файла. Полученные данные преобразуются в объект класса QJsonObject, который затем можно обрабатывать по необходимости
