@@ -1,0 +1,46 @@
+1. Импортирование необходимых библиотек:
+```cpp
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QUrl>
+```
+
+2. Создание экземпляра класса `QNetworkAccessManager`:
+```cpp
+QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+```
+
+3. Создание слота для обработки ответа от сервера:
+```cpp
+void MyWidget::replyFinished(QNetworkReply *reply)
+{
+    if (reply->error() == QNetworkReply::NoError) {
+        // Обработка ответа
+        QByteArray data = reply->readAll();
+        qDebug() << data;
+    } else {
+        // Обработка ошибки
+        qDebug() << reply->errorString();
+    }
+
+    reply->deleteLater();
+}
+```
+
+4. Создание и отправка HTTP-запроса:
+```cpp
+QUrl url("http://localhost:8080"); // замените на ваш сервер и порт
+QNetworkRequest request(url);
+QNetworkReply *reply = manager->get(request);
+
+// Подключение слота к сигналу ответа
+connect(reply, SIGNAL(finished()), this, SLOT(replyFinished()));
+```
+
+5. Включение обработки сетевых запросов Qt:
+```cpp
+QCoreApplication::processEvents();
+```
+
+При выполнении этих шагов ваш код будет готов к подключению к локальному серверу и отправке HTTP-запроса на него.
