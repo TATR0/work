@@ -1,0 +1,70 @@
+#include <QCoreApplication>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QDebug>
+
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    // Создаем экземпляр QNetworkAccessManager
+    QNetworkAccessManager manager;
+
+    // Создаем объект QNetworkRequest с указанием URL-адреса сервера
+    QNetworkRequest request(QUrl("http://localhost:8080"));
+
+    // Отправляем GET-запрос на сервер
+    QNetworkReply *reply = manager.get(request);
+
+    // Подключаемся к сигналу finished(), который будет вызван по завершении запроса
+    QObject::connect(reply, &QNetworkReply::finished, [&]() {
+        // Получаем статусный код ответа
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+        // Проверяем, успешно ли выполнен запрос
+        if (statusCode == 200) {
+            // Читаем ответ сервера
+            QByteArray response = reply->readAll();
+            qDebug() << "Response:" << response;
+        } else {
+            qDebug() << "Error:" << reply->errorString();
+        }
+
+        // Освобождаем ресурсы
+        reply->deleteLater();
+        qApp->quit();
+    });
+
+    return a.exec();
+}
+
+Для установки программы, которая находится в архиве tar.gz, выполните следующие действия:
+
+1. Откройте терминальное окно.
+2. Перейдите в каталог, где находится файл tar.gz, с помощью команды cd [путь].
+3. Распакуйте архив с помощью следующей команды:
+   ```
+   tar -xf [имя_файла.tar.gz]
+   ```
+   Например:
+   ```
+   tar -xf программа.tar.gz
+   ```
+4. Перейдите в распакованную папку:
+   ```
+   cd [имя_папки]
+   ```
+   Например:
+   ```
+   cd программа
+   ```
+5. Внутри папки находится скрипт для установки программы. Запустите его с помощью команды:
+   ```
+   ./install.sh
+   ```
+   Если у скрипта нет такого имени, посмотрите файл README или INSTALL в папке.
+6. Дождитесь успешного завершения работы скрипта установки. Он может потребовать ввести пароль администратора для выполнения некоторых задач.
+7. После установки программа готова к использованию.
+
+Обратите внимание, что процесс установки может отличаться в зависимости от программы, поэтому проверьте наличие инструкций в файлах README или INSTALL, которые чаще всего находятся в папке с программой или в самом архиве tar.gz.
