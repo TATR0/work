@@ -1,0 +1,113 @@
+Для запуска демона при включении компьютера на ОС Astralinux вам потребуются следующие шаги:
+
+1. Создайте системную службу для демона. Создайте файл с расширением ".service" в директории "/etc/systemd/system". Например, "mydaemon.service". Откройте файл и добавьте следующий код:
+
+[Unit]
+Description=My Daemon
+After=network.target
+
+[Service]
+ExecStart=/path/to/mydaemon
+
+[Install]
+WantedBy=default.target
+
+
+В этом коде "ExecStart" указывает на путь к файлу исполняемого кода вашего демона.
+
+2. Создайте исполняемый файл для вашего демона. Создайте cpp-файл (например, "mydaemon.cpp") и добавьте следующий код:
+
+#include <QDebug>
+#include <QCoreApplication>
+
+int main(int argc, char *argv[]) {
+    QCoreApplication app(argc, argv);
+
+    // Ваш код демона здесь
+
+    qDebug() << "My daemon is running!";
+
+    return app.exec();
+}
+
+
+3. Соберите ваше приложение на Qt с помощью qmake или cmake.
+
+4. Установите службу с помощью команды:
+
+sudo systemctl enable mydaemon.service
+
+
+5. Запустите службу с помощью команды:
+
+sudo systemctl start mydaemon.service
+
+
+Теперь ваш демон будет запускаться автоматически при включении компьютера. Вы можете проверить его статус с помощью команды:
+
+systemctl status mydaemon.service
+
+
+Обратите внимание, что пути к вашим файлам и службе могут отличаться, и вам необходимо заменить "/path/to/mydaemon" на путь к вашему исполняемому файлу демона.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import sys
+from PyQt5.QtCore import QUrl
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager
+
+class Requester(QWebEngineView):
+    def __init__(self):
+        super().__init__()
+        # Создание менеджера доступа к сети
+        self.network_manager = QNetworkAccessManager()
+        # Подключение метода, который будет вызываться при завершении запроса
+        self.network_manager.finished.connect(self.handle_response)
+
+    def handle_response(self, reply):
+        if reply.error():
+            # Обработка ошибки при отправке запроса
+            print('Error:', reply.errorString())
+        else:
+            # Обработка ответа от сервера
+            print('Response:', reply.readAll().data().decode())
+
+    def load(self, url):
+        # Создание http-запроса
+        request = QNetworkRequest(QUrl(url))
+        # Отправка запроса
+        self.network_manager.get(request)
+
+if __name__ == '__main__':
+    # Создание экземпляра приложения Qt
+    app = QApplication(sys.argv)
+
+    # Создание экземпляра демона
+    requester = Requester()
+
+    # Загрузка страницы в браузере
+    requester.load("http://example.com")
+
+    # Запуск цикла обработки событий Qt
+    sys.exit(app.exec_())
