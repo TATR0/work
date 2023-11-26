@@ -1,0 +1,20 @@
+Чтобы решить проблему отсутствия заголовка CORS "Access-Control-Allow-Origin" со стороны сервера Apache2 на Astralinux, можно воспользоваться модулем modheaders. Вот инструкция по настройке.
+
+1. Убедитесь, что модуль modheaders установлен и активирован. Для этого выполните следующую команду:
+
+sudo a2enmod headers
+
+
+2. Создайте файл .htaccess в папке, к которой обращается посторонний источник, или добавьте следующие строки в существующий файл .htaccess:
+
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
+
+
+3. Затем необходимо перезапустить сервер Apache2:
+
+sudo systemctl restart apache2
+
+
+После выполнения этих шагов, сервер Apache2 на Astralinux должен отдавать заголовок CORS "Access-Control-Allow-Origin" и разрешать чтение удаленного ресурса.
